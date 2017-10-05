@@ -199,8 +199,8 @@ public class RaygunAppender extends AppenderBase<ILoggingEvent>
     }
     else
     {
-      trace = new RaygunErrorStackTraceLineMessage[] { new RaygunErrorStackTraceLineMessage(locateCallSite()) };
-      className = trace[0].getClassName();
+      trace = null;
+      className = null;
       inner = Optional.absent();
     }
 

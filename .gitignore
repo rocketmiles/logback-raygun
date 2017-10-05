@@ -3,11 +3,14 @@ build
 target
 
 # Intellij IDEA
+.idea
+.idea/**
 .idea/workspace.xml
 .idea/tasks.xml
 .idea/libraries/
 .idea/scala_settings.xml
 .idea/dictionaries/
+logback-raygun.iml
 
 # Mac
 .DS_Store
