@@ -152,7 +152,7 @@ public class RaygunAppender extends AppenderBase<ILoggingEvent>
   private static RaygunErrorMessage buildRaygunMessage(ILoggingEvent loggingEvent)
   {
     final Optional<IThrowableProxy> exception = Optional.fromNullable(loggingEvent.getThrowableProxy());
-    return buildRaygunMessage(loggingEvent.getFormattedMessage(), exception);
+    return buildRaygunMessage(loggingEvent.getFormattedMessage(), exception, loggingEvent);
   }
 
   /**
@@ -161,7 +161,7 @@ public class RaygunAppender extends AppenderBase<ILoggingEvent>
    * @param exception The optional exception details.
    * @return The raygun message.
    */
-  private static RaygunErrorMessage buildRaygunMessage(String message, Optional<IThrowableProxy> exception)
+  private static RaygunErrorMessage buildRaygunMessage(String message, Optional<IThrowableProxy> exception, ILoggingEvent loggingEvent)
   {
     // The Raygun error message constructor wants a real exception, which we don't have - we only have
     // a logback throwable proxy.  Therefore, we construct the error message with any old exception,
@@ -190,7 +190,7 @@ public class RaygunAppender extends AppenderBase<ILoggingEvent>
 
       if (exception.get().getCause() != null)
       {
-        inner = Optional.of(buildRaygunMessage("Caused by", Optional.of(exception.get().getCause())));
+        inner = Optional.of(buildRaygunMessage("Caused by", Optional.of(exception.get().getCause()), loggingEvent));
       }
       else
       {
@@ -199,7 +199,7 @@ public class RaygunAppender extends AppenderBase<ILoggingEvent>
     }
     else
     {
-      trace = null;
+      trace = buildRaygunStack(loggingEvent.getCallerData());
       className = null;
       inner = Optional.absent();
     }
@@ -258,6 +258,19 @@ public class RaygunAppender extends AppenderBase<ILoggingEvent>
     return lines;
   }
 
+  private static RaygunErrorStackTraceLineMessage[] buildRaygunStack(StackTraceElement[] stackTraceElements)
+  {
+    final RaygunErrorStackTraceLineMessage[] lines = new RaygunErrorStackTraceLineMessage[stackTraceElements.length];
+
+    for (int i = 0; i < stackTraceElements.length; i++)
+    {
+      final StackTraceElement step = stackTraceElements[i];
+      lines[i] = new RaygunErrorStackTraceLineMessage(step);
+    }
+
+    return lines;
+  }
+
   /**
    * Gets the machine's hostname.
    * @return The hostname, or "UnknownHost" if it cannot be determined.
@@ -274,29 +287,5 @@ public class RaygunAppender extends AppenderBase<ILoggingEvent>
     }
   }
 
-  /**
-   * Finds the stack trace elements that corresponds to the actual log call-site.
-   * @return The applicable stack trace element.
-   */
-  private static StackTraceElement locateCallSite()
-  {
-    // The stack will contain Fat Boy Industrial entries, followed by logback entries,
-    // and then the actual call-site ...
 
-    final String FBI = "com.fatboyindustrial.raygun.RaygunAppender";
-    final String LOGBACK = "ch.qos.logback.";
-
-    for (StackTraceElement ste : new Exception().getStackTrace())
-    {
-      if (ste.getClassName().startsWith(FBI) ||
-          ste.getClassName().startsWith(LOGBACK))
-      {
-        continue;
-      }
-
-      return ste;
-    }
-
-    throw new IllegalStateException("Unable to determine call-site");
-  }
 }

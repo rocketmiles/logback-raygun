@@ -28,11 +28,13 @@
 
   <groupId>com.rocketmiles.logback-raygun</groupId>
   <artifactId>logback-raygun</artifactId>
-  <version>1.5.2</version>
+  <version>1.5.3</version>
   <packaging>jar</packaging>
 
   <name>logback-raygun</name>
-  <description>A logback appender that emits details to raygun.io.</description>
+  <description>A logback appender that emits details to raygun.io.
+    Forked from https://github.com/gkopff/logback-raygun to support an async wrapper without losing stacktraces
+  </description>
   <url>https://github.com/rocketmiles/logback-raygun</url>
 
   <licenses>
@@ -44,8 +46,6 @@
 
   <scm>
     <url>https://github.com/rocketmiles/logback-raygun</url>
-    <!--<connection>scm:git:https://github.com/gkopff/logback-raygun.git</connection>-->
-    <!--<developerConnection>scm:git:git@github.com:gkopff/logback-raygun.git</developerConnection>-->
   </scm>
 
   <properties>
