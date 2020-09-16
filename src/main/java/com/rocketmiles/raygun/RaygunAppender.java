@@ -21,14 +21,12 @@
  *  THE SOFTWARE.
  */
 
-package com.fatboyindustrial.raygun;
+package com.rocketmiles.raygun;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
-import java.util.Date;
-import java.util.List;
-import java.util.Map;
-
+import ch.qos.logback.classic.spi.ILoggingEvent;
+import ch.qos.logback.classic.spi.IThrowableProxy;
+import ch.qos.logback.classic.spi.StackTraceElementProxy;
+import ch.qos.logback.core.AppenderBase;
 import com.google.common.base.Optional;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
@@ -40,10 +38,12 @@ import com.mindscapehq.raygun4java.core.messages.RaygunErrorMessage;
 import com.mindscapehq.raygun4java.core.messages.RaygunErrorStackTraceLineMessage;
 import com.mindscapehq.raygun4java.core.messages.RaygunMessage;
 
-import ch.qos.logback.classic.spi.ILoggingEvent;
-import ch.qos.logback.classic.spi.IThrowableProxy;
-import ch.qos.logback.classic.spi.StackTraceElementProxy;
-import ch.qos.logback.core.AppenderBase;
+import java.net.InetAddress;
+import java.net.UnknownHostException;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 /**
  * A logback appender that emits details to {@code raygun.io}.
@@ -69,12 +69,19 @@ public class RaygunAppender extends AppenderBase<ILoggingEvent>
   /** Tags to send to Raygun. */
   private List<String> tags = ImmutableList.of();
 
+  /** Packages to strip from stack traces **/
+  private String[] excludeFromStacktraces;
+
   /**
    * No-arg constructor required by Logback.
    */
   public RaygunAppender()
   {
     ;
+  }
+
+  public void setExcludeFromStacktraces(String excludeFromStacktraces) {
+    this.excludeFromStacktraces = excludeFromStacktraces.split(",");
   }
 
   /**
@@ -103,7 +110,7 @@ public class RaygunAppender extends AppenderBase<ILoggingEvent>
       msg.getDetails().getClient().setClientUrlString(URL);
       msg.getDetails().setError(buildRaygunMessage(e));
       msg.getDetails().setTags(tags);
-      
+
       Map<String, String> customData = Maps.newHashMap();
       customData.put("thread", e.getThreadName());
       customData.put("logger", e.getLoggerName());
@@ -113,7 +120,7 @@ public class RaygunAppender extends AppenderBase<ILoggingEvent>
       for(String mdcKey : mdcContext.keySet()) {
           customData.put("mdc:" + mdcKey, mdcContext.get(mdcKey));
       }
-      
+
       msg.getDetails().setUserCustomData(ImmutableMap.copyOf(customData));
 
       ray.Post(msg);
@@ -149,7 +156,7 @@ public class RaygunAppender extends AppenderBase<ILoggingEvent>
    * @param loggingEvent The logging event.
    * @return The raygun message.
    */
-  private static RaygunErrorMessage buildRaygunMessage(ILoggingEvent loggingEvent)
+  private RaygunErrorMessage buildRaygunMessage(ILoggingEvent loggingEvent)
   {
     final Optional<IThrowableProxy> exception = Optional.fromNullable(loggingEvent.getThrowableProxy());
     return buildRaygunMessage(loggingEvent.getFormattedMessage(), exception, loggingEvent);
@@ -161,7 +168,7 @@ public class RaygunAppender extends AppenderBase<ILoggingEvent>
    * @param exception The optional exception details.
    * @return The raygun message.
    */
-  private static RaygunErrorMessage buildRaygunMessage(String message, Optional<IThrowableProxy> exception, ILoggingEvent loggingEvent)
+  private RaygunErrorMessage buildRaygunMessage(String message, Optional<IThrowableProxy> exception, ILoggingEvent loggingEvent)
   {
     // The Raygun error message constructor wants a real exception, which we don't have - we only have
     // a logback throwable proxy.  Therefore, we construct the error message with any old exception,
@@ -244,31 +251,40 @@ public class RaygunAppender extends AppenderBase<ILoggingEvent>
    * @param throwableProxy The logback throwable proxy.
    * @return The raygun stack trace information.
    */
-  private static RaygunErrorStackTraceLineMessage[] buildRaygunStack(IThrowableProxy throwableProxy)
+  private RaygunErrorStackTraceLineMessage[] buildRaygunStack(IThrowableProxy throwableProxy)
   {
     final StackTraceElementProxy[] proxies = throwableProxy.getStackTraceElementProxyArray();
-    final RaygunErrorStackTraceLineMessage[] lines = new RaygunErrorStackTraceLineMessage[proxies.length];
+    final List<RaygunErrorStackTraceLineMessage> lineList = new ArrayList<>();
 
-    for (int i = 0; i < proxies.length; i++)
-    {
-      final StackTraceElementProxy step = proxies[i];
-      lines[i] = new RaygunErrorStackTraceLineMessage(step.getStackTraceElement());
+    for (final StackTraceElementProxy step : proxies) {
+      if (!shouldExcludeFromStacktrace(step.getClassPackagingData().getCodeLocation())) {
+        lineList.add(new RaygunErrorStackTraceLineMessage(step.getStackTraceElement()));
+      }
     }
 
-    return lines;
+    return lineList.toArray(new RaygunErrorStackTraceLineMessage[0]);
   }
 
-  private static RaygunErrorStackTraceLineMessage[] buildRaygunStack(StackTraceElement[] stackTraceElements)
+  private RaygunErrorStackTraceLineMessage[] buildRaygunStack(StackTraceElement[] stackTraceElements)
   {
-    final RaygunErrorStackTraceLineMessage[] lines = new RaygunErrorStackTraceLineMessage[stackTraceElements.length];
+    final List<RaygunErrorStackTraceLineMessage> lineList = new ArrayList<>();
 
-    for (int i = 0; i < stackTraceElements.length; i++)
-    {
-      final StackTraceElement step = stackTraceElements[i];
-      lines[i] = new RaygunErrorStackTraceLineMessage(step);
+    for (final StackTraceElement step : stackTraceElements) {
+      if (!shouldExcludeFromStacktrace(step.getClassName())) {
+        lineList.add(new RaygunErrorStackTraceLineMessage(step));
+      }
     }
 
-    return lines;
+    return lineList.toArray(new RaygunErrorStackTraceLineMessage[0]);
+  }
+
+  private boolean shouldExcludeFromStacktrace(String className) {
+    for (String packageName: excludeFromStacktraces) {
+      if (className.startsWith(packageName)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**

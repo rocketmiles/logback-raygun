@@ -28,7 +28,7 @@
 
   <groupId>com.rocketmiles.logback-raygun</groupId>
   <artifactId>logback-raygun</artifactId>
-  <version>1.5.3</version>
+  <version>1.6.0</version>
   <packaging>jar</packaging>
 
   <name>logback-raygun</name>
@@ -59,8 +59,8 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.0</version>
         <configuration>
-          <source>1.7</source>
-          <target>1.7</target>
+          <source>8</source>
+          <target>8</target>
         </configuration>
       </plugin>
       <plugin>

@@ -14,3 +14,4 @@ logback-raygun.iml
 
 # Mac
 .DS_Store
+/settings.xml

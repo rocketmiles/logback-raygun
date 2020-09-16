@@ -25,7 +25,7 @@
 
   <statusListener class="ch.qos.logback.core.status.NopStatusListener"/>
 
-  <appender name="RAYGUN" class="com.fatboyindustrial.raygun.RaygunAppender">
+  <appender name="RAYGUN" class="com.rocketmiles.raygun.RaygunAppender">
     <apiKey><!-- insert key here --></apiKey>
 
     <!-- Deny all events with a level below WARN, that is: TRACE, DEBUG, INFO. -->

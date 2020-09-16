@@ -1,5 +1,11 @@
 # Change Log
 
+## [1.6.0]
+- Allow excluding package prefixes from stack traces
+
+## [1.5.3] 
+- Use SLf4j callerData if no exception
+
 ## [1.4.0] - 2016-04-11
 
 ### Added

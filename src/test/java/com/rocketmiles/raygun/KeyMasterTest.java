@@ -21,7 +21,7 @@
  *  THE SOFTWARE.
  */
 
-package com.fatboyindustrial.raygun;
+package com.rocketmiles.raygun;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableMap;
