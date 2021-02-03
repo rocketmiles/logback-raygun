@@ -1,5 +1,8 @@
 # Change Log
 
+## [1.6.1]
+- Fix NPE if class packaging is turned off, which is the default. 
+
 ## [1.6.0]
 - Allow excluding package prefixes from stack traces
 
