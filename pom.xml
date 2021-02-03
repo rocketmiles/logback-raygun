@@ -28,7 +28,7 @@
 
   <groupId>com.rocketmiles.logback-raygun</groupId>
   <artifactId>logback-raygun</artifactId>
-  <version>1.6.0</version>
+  <version>1.6.1</version>
   <packaging>jar</packaging>
 
   <name>logback-raygun</name>

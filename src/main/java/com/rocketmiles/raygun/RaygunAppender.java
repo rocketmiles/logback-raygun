@@ -257,7 +257,7 @@ public class RaygunAppender extends AppenderBase<ILoggingEvent>
     final List<RaygunErrorStackTraceLineMessage> lineList = new ArrayList<>();
 
     for (final StackTraceElementProxy step : proxies) {
-      if (!shouldExcludeFromStacktrace(step.getClassPackagingData().getCodeLocation())) {
+      if (!shouldExcludeFromStacktrace(step.getStackTraceElement().getClassName())) {
         lineList.add(new RaygunErrorStackTraceLineMessage(step.getStackTraceElement()));
       }
     }
